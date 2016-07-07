@@ -9,7 +9,7 @@
     "start": "npm-run-all --parallel open:src lint:watch test:watch",
     "lint": "node_modules/.bin/esw webpack.config.* src tools",
     "lint:watch": "npm run lint -- --watch",
-    "test": "mocha --reporter progress tools/testSetup.js \"src/**/*.test.js\"",
+    "test": "mocha --reporter spec tools/testSetup.js \"src/**/*.test.js\"",
     "test:watch": "npm run test -- --watch"
   },
   "dependencies": {
