@@ -4,8 +4,9 @@ import {bindActionCreators} from 'redux'
 import * as courseActions from '../../actions/courseActions'
 import CourseForm from './CourseForm'
 import toastr from 'toastr'
+import {authorFormattedForDropDown} from '../../selectors/selectors'
 
-class ManageCoursePage extends React.Component {
+export class ManageCoursePage extends React.Component {
   constructor (props, context) {
     super(props, context)
 
@@ -18,6 +19,7 @@ class ManageCoursePage extends React.Component {
     this.updateCourseState = this.updateCourseState.bind(this)
     this.saveCourse = this.saveCourse.bind(this)
     this.redirect = this.redirect.bind(this)
+    this.courseFormIsValid = this.courseFormIsValid.bind(this)
   }
 
   componentWillReceiveProps (nextProps) {
@@ -33,15 +35,38 @@ class ManageCoursePage extends React.Component {
     return this.setState({ course: course })
   }
 
-  saveCourse (event) {
-    event.preventDefault()
-    this.setState({saving: true})
-    this.props.actions.saveCourse(this.state.course)
-    .then(() => this.redirect())
+  courseFormIsValid () {
+    let formIsValid = true
+    let errors = {}
+
+    if (this.state.course.title.length < 5) {
+      errors.title = 'Title must be at least 5 characters.'
+      formIsValid = false
+    }
+
+    this.setState({errors: errors})
+    return formIsValid
   }
 
-  redirect() {
-    this.setState({saving: false})
+  saveCourse (event) {
+    event.preventDefault()
+
+    if (!this.courseFormIsValid()) {
+      return
+    }
+
+    this.setState({ saving: true })
+    this.props.actions.saveCourse(this.state.course)
+      .then(() => this.redirect())
+      .catch((error) => {
+        toastr.error(error)
+        this.setState({ saving: false })
+      })
+  }
+
+  redirect () {
+    this.setState({ saving: false })
+    toastr.success('Course Saved !')
     this.context.router.push('/courses')
   }
 
@@ -85,15 +110,10 @@ function mapStateToProps (state, ownProps) {
     course = getCourseById(state.courses, courseId)
   }
 
-  const authorFormattedForDropDown = state.authors.map((author) => {
-    return {
-      value: author.id,
-      text: `${author.firstName} ${author.lastName}`
-    }
-  })
+
   return {
     course: course,
-    authors: authorFormattedForDropDown
+    authors: authorFormattedForDropDown(state.authors)
   }
 }
 
